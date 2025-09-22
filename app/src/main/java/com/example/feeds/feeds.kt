@@ -3,9 +3,6 @@ package com.example.feeds
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.unit.minus
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -69,15 +66,6 @@ fun <T> runSuspendingBlockAndWaitForResult(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-fun isEpochSecondsAfter(oneWeekAgo: Instant, epochSeconds: Long): Boolean {
-    // Convert the input epoch seconds to an Instant
-    val inputInstant = Instant.ofEpochSecond(epochSeconds)
-
-    // Check if the input Instant is after oneWeekAgo
-    return inputInstant.isAfter(oneWeekAgo)
-}
-
 @RequiresApi(Build.VERSION_CODES.Q)
 fun generateFeeds(context: Context): String {
     var logs = "Processing started..."
@@ -104,19 +92,37 @@ fun generateFeeds(context: Context): String {
             asyncLogs = fetchAndParseLogs + asyncLogs
             val sortedPostsItems = allPostsItems.sortedByDescending { it.publishedEpochSeconds }
 
-            var postsHtml = """
-<html>
+            var postsHtml = """<!DOCTYPE html>
+<html lang="en">
     <head>
         <title>Feed Posts</title>
         <style>
             button { 
                 height: 100px;
-                width: 400px;
+                width: 49%;
                 font-size: 40px;
             }
+            button.disabled {
+                border: 1px solid #999999;
+                background-color: #cccccc;
+                color: #666666;
+            }
+            body {
+                margin: 0% 2% 0% 2%;
+            }
         </style>
-        <script type="text/javascript">
+        <script>
             function toggleDisplay(selector) {
+                // change button class
+                var button = document.getElementById(selector);
+                if (button !== null) {
+                    if (button.className === 'disabled') {
+                        button.className = '';
+                    } else {
+                        button.className = 'disabled';
+                    }
+                }
+                // toggle display property
                 var elements = document.querySelectorAll(selector);
                 elements.forEach(function(el) {
                     el.style.display = (el.style.display === 'none') ? 'block' : 'none';
@@ -125,14 +131,15 @@ fun generateFeeds(context: Context): String {
         </script>
     </head>
     <body>
-        <button onclick="toggleDisplay('.en')">ES+CA</button>
-        <button onclick="toggleDisplay('.es');toggleDisplay('.ca')">EN</button>"""
+        <button id=".en" onclick="toggleDisplay('.en')">EN</button>
+        <button id=".es" onclick="toggleDisplay('.es');toggleDisplay('.ca')">ES+CA</button>"""
             val asciiRegex = Regex("[^\\x00-\\xFF]")
             sortedPostsItems.forEach { item ->
                 item.publishedEpochSeconds?.let { publishedTime ->
                     if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
                         val asciiOnlyTitle = asciiRegex.replace(item.title, "")
                         postsHtml += "<p class='${item.language}'><a href='${item.link}' target='_blank'>${asciiOnlyTitle.lowercase()}</a></p>"
+                        return@forEach
                     }
                 }
             }
