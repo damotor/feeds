@@ -123,16 +123,27 @@ fun generateFeeds(context: Context): String {
                     }
                 }
                 // toggle display property
-                var elements = document.querySelectorAll(selector);
-                elements.forEach(function(el) {
+                var elements = document.getElementsByClassName(selector);
+                Array.from(elements).forEach((el) => {
                     el.style.display = (el.style.display === 'none') ? 'block' : 'none';
                 });
             }
+            document.addEventListener('DOMContentLoaded', function() {
+                const d = new Date();
+                if (d.getDay() == 5) {
+                    // on Friday show only Spanish and Catalan initially
+                    toggleDisplay('en');
+                } else {
+                    // otherwise show only English
+                    toggleDisplay('es');
+                    toggleDisplay('ca');
+                }
+            });
         </script>
     </head>
     <body>
-        <button id=".en" onclick="toggleDisplay('.en')">EN</button>
-        <button id=".es" onclick="toggleDisplay('.es');toggleDisplay('.ca')">ES+CA</button>"""
+        <button id="en" onclick="toggleDisplay('en')">EN</button>
+        <button id="es" onclick="toggleDisplay('es');toggleDisplay('ca')">ES+CA</button>"""
             val asciiRegex = Regex("[^\\x00-\\xFF]")
             sortedPostsItems.forEach { item ->
                 item.publishedEpochSeconds?.let { publishedTime ->
