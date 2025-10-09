@@ -144,23 +144,28 @@ fun generateFeeds(context: Context): String {
     <body>
         <button id="en" onclick="toggleDisplay('en')">EN</button>
         <button id="es" onclick="toggleDisplay('es');toggleDisplay('ca')">ES+CA</button>"""
-            val asciiRegex = Regex("[^\\x00-\\xFF]")
-            sortedPostsItems.forEach { item ->
-                item.publishedEpochSeconds?.let { publishedTime ->
-                    if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
-                        val asciiOnlyTitle = asciiRegex.replace(item.title, "")
-                        postsHtml += "<p class='${item.language}'><a href='${item.link}' target='_blank'>${asciiOnlyTitle.lowercase()}</a></p>"
-                        return@forEach
+            if (sortedPostsItems.isNotEmpty()) {
+                val asciiRegex = Regex("[^\\x00-\\xFF]")
+                sortedPostsItems.forEach { item ->
+                    item.publishedEpochSeconds?.let { publishedTime ->
+                        if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
+                            val asciiOnlyTitle = asciiRegex.replace(item.title, "")
+                            postsHtml += "<p class='${item.language}'><a href='${item.link}' target='_blank'>${asciiOnlyTitle.lowercase()}</a></p>"
+                            return@forEach
+                        }
                     }
                 }
-            }
-            postsHtml += "</body></html>"
+                postsHtml += "</body></html>"
 
-            val serverInstance = startSimpleHttpServer(8080, postsHtml) // Your existing function
-            asyncLogs = if (serverInstance == null) {
-                "Error: starting server failed\n$asyncLogs"
+                val serverInstance =
+                    startSimpleHttpServer(8080, postsHtml) // Your existing function
+                asyncLogs = if (serverInstance == null) {
+                    "Error: starting server failed\n$asyncLogs"
+                } else {
+                    "Server started on port ${serverInstance.listeningPort}. Access at http://localhost:8080/\n$asyncLogs"
+                }
             } else {
-                "Server started on port ${serverInstance.listeningPort}. Access at http://localhost:8080/\n$asyncLogs"
+                asyncLogs = "No posts found.\n$asyncLogs"
             }
 
             // --- End of the code previously in runSuspendingWithResultCallback's block ---

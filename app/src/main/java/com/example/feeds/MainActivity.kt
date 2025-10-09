@@ -37,7 +37,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        openUrlWithAppChooser(this, "http://localhost:8080/")
+        // Only open browser if we retrieved posts
+        if (!logs.contains("No posts found.")) {
+            openUrlWithAppChooser(this, "http://localhost:8080/")
+        }
         scheduleAppExit()
     }
 
