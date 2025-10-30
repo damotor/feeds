@@ -60,7 +60,7 @@ suspend fun fetchUrlContentAsString(
                             try {
                                 charset = java.nio.charset.Charset.forName(trimmedParam.substring("charset=".length))
                             } catch (e: Exception) {
-                                Log.w("fetchUrl", "Unsupported charset: ${trimmedParam.substring("charset=".length)}, defaulting to UTF-8")
+                                Log.w("fetchUrl", "Unsupported charset: ${trimmedParam.substring("charset=".length)}, defaulting to UTF-8: $e")
                             }
                             return@forEach
                         }
@@ -93,10 +93,11 @@ fun identifyFeedTypeHeuristic(xmlString: String): FeedType {
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun parseDateToEpochSeconds(dateString: String): Long? {
-    try { return OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toEpochSecond() } catch (e: DateTimeParseException) { /* try next */ }
-    try { return ZonedDateTime.parse(dateString, DateTimeFormatter.RFC_1123_DATE_TIME).toEpochSecond() } catch (e: DateTimeParseException) { /* try next */ }
-    try { val formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH); return ZonedDateTime.parse(dateString, formatter).toEpochSecond() } catch (e: DateTimeParseException) {}
-    Log.w("ParseDate", "Failed to parse date: $dateString")
+    try { return OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toEpochSecond() } catch (_: DateTimeParseException) { /* try next */ }
+    try { return ZonedDateTime.parse(dateString, DateTimeFormatter.RFC_1123_DATE_TIME).toEpochSecond() } catch (_: DateTimeParseException) { /* try next */ }
+    try { val formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH); return ZonedDateTime.parse(dateString, formatter).toEpochSecond() } catch (e: DateTimeParseException) {
+        Log.w("ParseDate", "Failed to parse date: $dateString. $e")
+    }
     return null
 }
 
@@ -251,7 +252,7 @@ suspend fun fetchAndParseFeedsConcurrently(feeds: List<FeedItem>): Pair<List<Pos
                             onSuccess = { posts ->
                                 postsForThisFeed = posts
                                 if (posts.isEmpty()) {
-                                    individualFeedLogs.append("Error: ${logPrefix} Parsed ${posts.size} items.\n")
+                                    individualFeedLogs.append("Error: $logPrefix Parsed 0 items.\n")
                                 } else {
                                     //individualFeedLogs.append("${logPrefix}Successfully parsed ${posts.size} items.\n")
                                 }
@@ -290,7 +291,7 @@ suspend fun fetchAndParseFeedsConcurrently(feeds: List<FeedItem>): Pair<List<Pos
 
 // Dummy Log for environments without Android Log
 object Log {
-    fun d(tag: String, msg: String) = println("D/$tag: $msg")
+    //fun d(tag: String, msg: String) = println("D/$tag: $msg")
     fun i(tag: String, msg: String) = println("I/$tag: $msg")
     fun w(tag: String, msg: String, tr: Throwable? = null) = println("W/$tag: $msg ${tr?.message ?: ""}")
     fun e(tag: String, msg: String, tr: Throwable? = null) = println("E/$tag: $msg ${tr?.message ?: ""}")

@@ -11,7 +11,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
 
 // Data class to represent a parsed feed item (optional, but good for structure)
-// Modify this based on what each line in your feeds.txt represents.
+// Modify this based on what each line in your feeds.csv represents.
 data class FeedItem(
     val language: String,
     val title: String,
@@ -72,12 +72,12 @@ fun generateFeeds(context: Context): String {
     val feedItems = loadFeedsFile(context)
 
     if (feedItems == null) {
-        logs = "Error: Failed to load or parse feeds.txt from Downloads.\n$logs"
+        logs = "Error: Failed to load or parse feeds.csv from Downloads.\n$logs"
         return logs
     }
 
     if (feedItems.isEmpty()) {
-        logs = "No feed items found in feeds.txt or all lines were empty/malformed.\n$logs"
+        logs = "No feed items found in feeds.csv or all lines were empty/malformed.\n$logs"
         return logs
     }
 

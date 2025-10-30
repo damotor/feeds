@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 
 /**
  * Opens the given URL, always prompting the user to choose an application
@@ -30,7 +31,7 @@ fun openUrlWithAppChooser(
 
     val uri: Uri
     try {
-        uri = Uri.parse(urlString)
+        uri = urlString.toUri()
         if (uri.scheme == null || (uri.scheme != "http" && uri.scheme != "https")) {
             Log.w(
                 tag,
