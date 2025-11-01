@@ -129,16 +129,28 @@ fun generateFeeds(context: Context): String {
                 });
             }
             document.addEventListener('DOMContentLoaded', function() {
-                const d = new Date();
-                if (d.getDay() == 5) {
-                    // on Friday show only Spanish and Catalan initially
-                    toggleDisplay('en');
-                } else {
-                    // otherwise show only English
-                    toggleDisplay('es');
-                    toggleDisplay('ca');
+                // if buttons haven't been toggled yet
+                if (document.getElementById('en').className != 'disabled' && document.getElementById('es').className != 'disabled') {
+                    const d = new Date();
+                    // Friday and Saturday: display Spanish and English by default, otherwise display only English
+                    if (d.getDay() == 5 || d.getDay() == 6) {
+                        // on Friday show only Spanish and Catalan initially
+                        toggleDisplay('en');
+                    } else {
+                        // otherwise show only English
+                        toggleDisplay('es');
+                        toggleDisplay('ca');
+                    }
                 }
             });
+            function newTab(newUrl) {
+                var tab=window.open("");
+                tab.document.write("<!DOCTYPE html><html>"+document.getElementsByTagName("html")[0].innerHTML+"</html>");
+                tab.document.close();
+                tab.scrollTo(0, Math.floor(window.scrollY));
+                setTimeout(function() { tab.scrollTo(0, Math.floor(window.scrollY));}, 500);
+                setTimeout(function() { window.open(newUrl,'_self');}, 1000);
+            }
         </script>
     </head>
     <body>
@@ -150,7 +162,7 @@ fun generateFeeds(context: Context): String {
                     item.publishedEpochSeconds?.let { publishedTime ->
                         if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
                             val asciiOnlyTitle = asciiRegex.replace(item.title, "")
-                            postsHtml += "<p class='${item.language}'><a href='${item.link}' target='_blank'>${asciiOnlyTitle.lowercase()}</a></p>"
+                            postsHtml += "<p class='${item.language}'><a href='${item.link}' target='_blank'>${asciiOnlyTitle.lowercase()}</a> <input type='button' value='New tab' onclick='newTab(\"${item.link}\")'/></p>"
                             return@forEach
                         }
                     }
