@@ -96,6 +96,7 @@ fun generateFeeds(context: Context): String {
 <html lang="en">
     <head>
         <title>Feed Posts</title>
+        <meta charset="UTF-8">
         <style>
             button { 
                 height: 100px;
@@ -144,10 +145,12 @@ fun generateFeeds(context: Context): String {
                 }
             });
             function openInNewBackgroundTab(newUrl) {
-                var tab = window.open("");
-                tab.document.write("<!DOCTYPE html><html>"+document.getElementsByTagName("html")[0].innerHTML+"</html>");
-                tab.document.close();
-                // scrolling doesn't work without setTimeout
+                const htmlContent = "<!DOCTYPE html><html>" + document.documentElement.innerHTML + "</html>";// 2. Create a Blob from the HTML string.
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                var tab = window.open(url);
+                // This is good practice to release memory.
+                setTimeout(() => URL.revokeObjectURL(url), 100);
                 setTimeout(function() { tab.scrollTo(0, Math.floor(window.scrollY));}, 1);
                 setTimeout(function() { window.open(newUrl,'_self');}, 1);
             }
