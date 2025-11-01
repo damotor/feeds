@@ -162,7 +162,7 @@ fun generateFeeds(context: Context): String {
                     item.publishedEpochSeconds?.let { publishedTime ->
                         if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
                             val asciiOnlyTitle = asciiRegex.replace(item.title, "")
-                            postsHtml += "<p class='${item.language}'><a href='${item.link}' target='_blank'>${asciiOnlyTitle.lowercase()}</a> <input type='button' value='New tab' onclick='newTab(\"${item.link}\")'/></p>"
+                            postsHtml += "<p class='${item.language}'><a  href='#' onclick='newTab(\"${item.link}\");return false;'>${asciiOnlyTitle.lowercase()}</a></p>"
                             return@forEach
                         }
                     }
