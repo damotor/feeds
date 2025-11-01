@@ -145,14 +145,18 @@ fun generateFeeds(context: Context): String {
                 }
             });
             function openInNewBackgroundTab(newUrl) {
-                const htmlContent = "<!DOCTYPE html><html>" + document.documentElement.innerHTML + "</html>";// 2. Create a Blob from the HTML string.
+                const scrollY = Math.floor(window.scrollY);
+                const htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+                    document.head.innerHTML +
+                    '<script>document.addEventListener("DOMContentLoaded", function() { window.scrollTo(0, ' + scrollY + '); });<' + '/script>' +
+                    '</head><body>' +
+                    document.body.innerHTML +
+                    '</body></html>';
                 const blob = new Blob([htmlContent], { type: 'text/html' });
                 const url = URL.createObjectURL(blob);
-                var tab = window.open(url);
-                // This is good practice to release memory.
-                setTimeout(() => URL.revokeObjectURL(url), 100);
-                setTimeout(function() { tab.scrollTo(0, Math.floor(window.scrollY));}, 1);
-                setTimeout(function() { window.open(newUrl,'_self');}, 1);
+                window.open(url);
+                URL.revokeObjectURL(url);
+                window.open(newUrl, '_self');
             }
         </script>
     </head>
