@@ -143,13 +143,13 @@ fun generateFeeds(context: Context): String {
                     }
                 }
             });
-            function newTab(newUrl) {
-                var tab=window.open("");
+            function openInNewBackgroundTab(newUrl) {
+                var tab = window.open("");
                 tab.document.write("<!DOCTYPE html><html>"+document.getElementsByTagName("html")[0].innerHTML+"</html>");
                 tab.document.close();
-                tab.scrollTo(0, Math.floor(window.scrollY));
-                setTimeout(function() { tab.scrollTo(0, Math.floor(window.scrollY));}, 500);
-                setTimeout(function() { window.open(newUrl,'_self');}, 1000);
+                // scrolling doesn't work without setTimeout
+                setTimeout(function() { tab.scrollTo(0, Math.floor(window.scrollY));}, 1);
+                setTimeout(function() { window.open(newUrl,'_self');}, 1);
             }
         </script>
     </head>
@@ -162,7 +162,7 @@ fun generateFeeds(context: Context): String {
                     item.publishedEpochSeconds?.let { publishedTime ->
                         if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
                             val asciiOnlyTitle = asciiRegex.replace(item.title, "")
-                            postsHtml += "<p class='${item.language}'><a  href='#' onclick='newTab(\"${item.link}\");return false;'>${asciiOnlyTitle.lowercase()}</a></p>"
+                            postsHtml += "<p class='${item.language}'><a  href='#' onclick='openInNewBackgroundTab(\"${item.link}\");return false;'>${asciiOnlyTitle.lowercase()}</a></p>"
                             return@forEach
                         }
                     }
