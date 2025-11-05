@@ -166,7 +166,7 @@ fun generateFeeds(context: Context): String {
             if (sortedPostsItems.isNotEmpty()) {
                 val asciiRegex = Regex("[^\\x00-\\xFF]")
                 sortedPostsItems.forEach { item ->
-                    item.publishedEpochSeconds?.let { publishedTime ->
+                    item.publishedEpochSeconds?.let { _ ->
                         if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
                             val asciiOnlyTitle = asciiRegex.replace(item.title, "")
                             postsHtml += "<p class='${item.language}'><a  href='#' onclick='openInNewBackgroundTab(\"${item.link}\");return false;'>${asciiOnlyTitle.lowercase()}</a></p>"
