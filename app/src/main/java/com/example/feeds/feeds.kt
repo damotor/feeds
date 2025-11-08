@@ -98,17 +98,26 @@ fun generateFeeds(context: Context): String {
         <title>Feed Posts</title>
         <meta charset="UTF-8">
         <style>
+            a {
+                color: #ffffff;
+            }
+            a:visited {
+              color: #cccccc;
+            }
             button { 
                 height: 100px;
                 width: 49%;
                 font-size: 40px;
+                background-color: #000000;
+                color: #ffffff;
             }
             button.disabled {
                 border: 1px solid #999999;
-                background-color: #cccccc;
+                background-color: #000000;
                 color: #666666;
             }
             body {
+                background-color: #000000;
                 margin: 0% 2% 0% 2%;
             }
         </style>
