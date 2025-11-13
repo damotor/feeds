@@ -73,7 +73,7 @@ fun generateFeeds(context: Context): String {
     val feedItems = loadFeedsFile(context)
 
     if (feedItems == null) {
-        logs = "Error: Failed to load or parse feeds.csv from Downloads.\n$logs"
+        logs = "Error: Failed to load or parse feeds.csv.\n$logs"
         return logs
     }
 
