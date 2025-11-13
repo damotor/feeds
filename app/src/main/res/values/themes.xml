@@ -2,4 +2,9 @@
 <resources>
 
     <style name="Theme.Feeds" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@android:color/black</item>
+        <item name="postSplashScreenTheme">@style/Theme.Feeds</item>
+    </style>
 </resources>
