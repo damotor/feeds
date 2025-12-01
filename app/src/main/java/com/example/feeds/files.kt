@@ -66,7 +66,7 @@ fun initializeFileIfNotFound(
     val contentValues = ContentValues().apply {
         put(MediaStore.MediaColumns.DISPLAY_NAME, targetFilename)
         put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS) // MediaStore adds the trailing slash
+        put(MediaStore.MediaColumns.RELATIVE_PATH, documentsPath)
     }
 
     var newFileUri: Uri? = null
