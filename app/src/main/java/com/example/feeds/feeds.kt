@@ -166,6 +166,7 @@ fun generateFeeds(context: Context): String {
                 const url = URL.createObjectURL(blob);
                 window.open(url);
                 URL.revokeObjectURL(url);
+                window.scrollTo(0, 0);
                 window.open(newUrl, '_self');
             }
         </script>
