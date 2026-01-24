@@ -164,10 +164,12 @@ fun generateFeeds(context: Context): String {
                     '</body></html>';
                 const blob = new Blob([htmlContent], { type: 'text/html' });
                 const url = URL.createObjectURL(blob);
+                window.scrollTo(0, 0);
+                setTimeout(() => {
+                    window.open(newUrl, '_self');
+                }, 250);
                 window.open(url);
                 URL.revokeObjectURL(url);
-                window.scrollTo(0, 0);
-                window.open(newUrl, '_self');
             }
         </script>
     </head>
