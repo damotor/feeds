@@ -165,17 +165,16 @@ fun generateFeeds(context: Context): String {
                 const blob = new Blob([htmlContent], { type: 'text/html' });
                 const url = URL.createObjectURL(blob);
                 
-                window.open(url);
-                URL.revokeObjectURL(url);
-                
-                setTimeout(() => {
-                    // Try to scroll to top in multiple ways
-                    window.scrollTo(0, 0);
-                    document.body.scrollTop = 0; // For Safari
-                    document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+                // Try to scroll to top in multiple ways
+                window.scrollTo(0, 0);
+                document.body.scrollTop = 0; // For Safari
+                document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
 
+                setTimeout(() => {
+                    window.open(url);
+                    URL.revokeObjectURL(url);
                     window.location.href = newUrl;
-                }, 250);
+                }, 50);
             }
         </script>
     </head>
