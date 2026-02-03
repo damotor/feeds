@@ -123,35 +123,35 @@ fun generateFeeds(context: Context): String {
             }
         </style>
         <script>
-            function toggleDisplay(selector) {
-                // change button class
-                var button = document.getElementById(selector);
-                if (button !== null) {
-                    if (button.className === 'disabled') {
-                        button.className = '';
-                    } else {
-                        button.className = 'disabled';
-                    }
+            function selectLang(lang) {
+                var enButton = document.getElementById('en');
+                var esButton = document.getElementById('es');
+                var enElements = document.getElementsByClassName('en');
+                var esElements = document.getElementsByClassName('es');
+                var caElements = document.getElementsByClassName('ca');
+
+                if (lang === 'en') {
+                    enButton.className = '';
+                    esButton.className = 'disabled';
+                    Array.from(enElements).forEach(el => el.style.display = 'block');
+                    Array.from(esElements).forEach(el => el.style.display = 'none');
+                    Array.from(caElements).forEach(el => el.style.display = 'none');
+                } else { // es
+                    enButton.className = 'disabled';
+                    esButton.className = '';
+                    Array.from(enElements).forEach(el => el.style.display = 'none');
+                    Array.from(esElements).forEach(el => el.style.display = 'block');
+                    Array.from(caElements).forEach(el => el.style.display = 'block');
                 }
-                // toggle display property
-                var elements = document.getElementsByClassName(selector);
-                Array.from(elements).forEach((el) => {
-                    el.style.display = (el.style.display === 'none') ? 'block' : 'none';
-                });
             }
             document.addEventListener('DOMContentLoaded', function() {
-                // if buttons haven't been toggled yet
-                if (document.getElementById('en').className != 'disabled' && document.getElementById('es').className != 'disabled') {
-                    const d = new Date();
-                    // Friday and Saturday: display Spanish and English by default, otherwise display only English
-                    if (d.getDay() == 5 || d.getDay() == 6) {
-                        // on Friday show only Spanish and Catalan initially
-                        toggleDisplay('en');
-                    } else {
-                        // otherwise show only English
-                        toggleDisplay('es');
-                        toggleDisplay('ca');
-                    }
+                const d = new Date();
+                // Friday and Saturday: display Spanish and Catalan
+                if (d.getDay() == 5 || d.getDay() == 6) {
+                    selectLang('es');
+                } else {
+                    // otherwise show only English
+                    selectLang('en');
                 }
             });
             function openInNewBackgroundTab(newUrl) {
@@ -174,13 +174,13 @@ fun generateFeeds(context: Context): String {
                     window.open(url);
                     URL.revokeObjectURL(url);
                     window.location.href = newUrl;
-                }, 50);
+                }, 250);
             }
         </script>
     </head>
     <body>
-        <button id="en" onclick="toggleDisplay('en')">EN</button>
-        <button id="es" onclick="toggleDisplay('es');toggleDisplay('ca')">ES+CA</button>"""
+        <button id="en" onclick="selectLang('en')">EN</button>
+        <button id="es" onclick="selectLang('es')">ES+CA</button>"""
             if (sortedPostsItems.isNotEmpty()) {
                 val asciiRegex = Regex("[^\\x00-\\xFF]")
                 sortedPostsItems.forEach { item ->
