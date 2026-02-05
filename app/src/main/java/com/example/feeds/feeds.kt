@@ -103,7 +103,7 @@ fun generateFeeds(context: Context): String {
                 color: #ffffff;
             }
             a:visited {
-              color: #cccccc;
+              color: #666666;
             }
             button { 
                 height: 100px;
@@ -188,7 +188,7 @@ fun generateFeeds(context: Context): String {
                     item.publishedEpochSeconds?.let { _ ->
                         if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
                             val asciiOnlyTitle = asciiRegex.replace(item.title, "")
-                            postsHtml += "<p class='${item.language}'><a  href='#' onclick='openInNewBackgroundTab(\"${item.link}\");return false;'>${asciiOnlyTitle.lowercase()}</a></p>"
+                            postsHtml += "<p class='${item.language}'><a  href='${item.link}' onclick='openInNewBackgroundTab(\"${item.link}\");return false;'>${asciiOnlyTitle.lowercase()}</a></p>"
                             return@forEach
                         }
                     }
