@@ -175,7 +175,7 @@ fun generateFeeds(context: Context): String {
                     window.open(url);
                     URL.revokeObjectURL(url);
                     window.location.href = newUrl;
-                }, 250);
+                }, 500);
             }
         </script>
     </head>
