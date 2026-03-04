@@ -155,8 +155,19 @@ fun generateFeeds(context: Context): String {
                     selectLang('en');
                 }
             });
+            function forceScrollTop() {
+                window.scrollTo(0, 0);
+                if (document.body) document.body.scrollTop = 0;
+                if (document.documentElement) document.documentElement.scrollTop = 0;
+            }
+            window.addEventListener('pageshow', function(event) {
+                if (window.location.protocol === 'blob:') return;
+                // Ensure we are at the top when returning to the page
+                forceScrollTop();
+                setTimeout(forceScrollTop, 50);
+            });
             function openInNewBackgroundTab(newUrl) {
-                const scrollY = Math.floor(window.scrollY);
+                const scrollY = Math.floor(window.pageYOffset || window.scrollY || document.documentElement.scrollTop || 0);
                 const htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
                     document.head.innerHTML +
                     '<script>document.addEventListener("DOMContentLoaded", function() { window.scrollTo(0, ' + scrollY + '); });<' + '/script>' +
@@ -167,11 +178,12 @@ fun generateFeeds(context: Context): String {
                 const url = URL.createObjectURL(blob);
                 
                 // Try to scroll to top in multiple ways
-                window.scrollTo(0, 0);
-                document.body.scrollTop = 0; // For Safari
-                document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
-
+                forceScrollTop();
+                // Aggressively force scroll to top until navigation starts
+                const scrollInterval = setInterval(forceScrollTop, 10);
                 setTimeout(() => {
+                    clearInterval(scrollInterval);
+                    forceScrollTop();
                     window.open(url);
                     URL.revokeObjectURL(url);
                     window.location.href = newUrl;
