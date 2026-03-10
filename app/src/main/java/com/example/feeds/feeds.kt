@@ -131,19 +131,20 @@ fun generateFeeds(context: Context): String {
                 var caElements = document.getElementsByClassName('ca');
 
                 if (lang === 'en') {
-                    enButton.className = '';
-                    esButton.className = 'disabled';
+                    esButton.className = '';
+                    enButton.className = 'disabled';
                     Array.from(enElements).forEach(el => el.style.display = 'block');
                     Array.from(esElements).forEach(el => el.style.display = 'none');
                     Array.from(caElements).forEach(el => el.style.display = 'none');
                 } else { // es
-                    enButton.className = 'disabled';
-                    esButton.className = '';
+                    esButton.className = 'disabled';
+                    enButton.className = '';
                     Array.from(enElements).forEach(el => el.style.display = 'none');
                     Array.from(esElements).forEach(el => el.style.display = 'block');
                     Array.from(caElements).forEach(el => el.style.display = 'block');
                 }
             }
+
             document.addEventListener('DOMContentLoaded', function() {
                 if (window.location.protocol === 'blob:') return;
                 const d = new Date();
@@ -155,17 +156,24 @@ fun generateFeeds(context: Context): String {
                     selectLang('en');
                 }
             });
-            function forceScrollTop() {
-                window.scrollTo(0, 0);
-                if (document.body) document.body.scrollTop = 0;
-                if (document.documentElement) document.documentElement.scrollTop = 0;
+
+            function scrollTopAndOpen(newUrl, blobUrl) {
+                function performScrollAndNavigate(maxRetries) {
+                    window.scrollTo(0, 0);
+                    setTimeout(function() {
+                        const currentScroll = window.scrollY;
+                        if (maxRetries > 0 || currentScroll > 0) {
+                            performScrollAndNavigate(maxRetries-1);
+                        } else {
+                            window.open(blobUrl);
+                            URL.revokeObjectURL(blobUrl);
+                            window.location.href = newUrl;
+                        }
+                    }, 10);
+                }
+                performScrollAndNavigate(100);
             }
-            window.addEventListener('pageshow', function(event) {
-                if (window.location.protocol === 'blob:') return;
-                // Ensure we are at the top when returning to the page
-                forceScrollTop();
-                setTimeout(forceScrollTop, 50);
-            });
+
             function openInNewBackgroundTab(newUrl) {
                 const scrollY = Math.floor(window.pageYOffset || window.scrollY || document.documentElement.scrollTop || 0);
                 const htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
@@ -175,19 +183,9 @@ fun generateFeeds(context: Context): String {
                     document.body.innerHTML +
                     '</body></html>';
                 const blob = new Blob([htmlContent], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
+                const blobUrl = URL.createObjectURL(blob);
                 
-                // Try to scroll to top in multiple ways
-                forceScrollTop();
-                // Aggressively force scroll to top until navigation starts
-                const scrollInterval = setInterval(forceScrollTop, 10);
-                setTimeout(() => {
-                    clearInterval(scrollInterval);
-                    forceScrollTop();
-                    window.open(url);
-                    URL.revokeObjectURL(url);
-                    window.location.href = newUrl;
-                }, 750);
+                scrollTopAndOpen(newUrl, blobUrl);
             }
         </script>
     </head>

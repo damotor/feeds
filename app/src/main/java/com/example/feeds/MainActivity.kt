@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
             finishAndRemoveTask()
             exitProcess(0) // Ensures the process is killed. Use with caution.
         }
-        exitHandler.postDelayed(exitRunnable, 20000)
+        exitHandler.postDelayed(exitRunnable, 30000)
     }
 }
 
