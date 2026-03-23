@@ -4,6 +4,9 @@ package com.example.feeds
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -121,6 +124,12 @@ fun generateFeeds(context: Context): String {
                 background-color: #000000;
                 margin: 0% 2% 0% 2%;
             }
+            h2 {
+                color: #888888;
+                font-size: 30px;
+                margin-top: 40px;
+                border-bottom: 1px solid #333333;
+            }
         </style>
         <script>
             function selectLang(lang) {
@@ -194,9 +203,17 @@ fun generateFeeds(context: Context): String {
         <button id="es" onclick="selectLang('es')">ES+CA</button>"""
             if (sortedPostsItems.isNotEmpty()) {
                 val asciiRegex = Regex("[^\\x00-\\xFF]")
+                val dateFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy").withZone(ZoneId.systemDefault())
+                var lastDateString = ""
+
                 sortedPostsItems.forEach { item ->
-                    item.publishedEpochSeconds?.let { _ ->
+                    item.publishedEpochSeconds?.let { epoch ->
                         if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
+                            val dateString = dateFormatter.format(Instant.ofEpochSecond(epoch))
+                            if (dateString != lastDateString) {
+                                postsHtml += "<h2>$dateString</h2>"
+                                lastDateString = dateString
+                            }
                             val asciiOnlyTitle = asciiRegex.replace(item.title, "")
                             postsHtml += "<p class='${item.language}'><a  href='${item.link}' onclick='openInNewBackgroundTab(\"${item.link}\");return false;'>${asciiOnlyTitle.lowercase()}</a></p>"
                             return@forEach
