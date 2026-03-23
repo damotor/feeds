@@ -1,1 +1,3 @@
+# Format: language, title, rss_url
+# Lines starting with # are ignored.
 en,Slashdot,https://rss.slashdot.org/Slashdot/slashdotMain
