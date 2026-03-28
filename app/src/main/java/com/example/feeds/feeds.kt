@@ -130,6 +130,12 @@ fun generateFeeds(context: Context): String {
                 margin-top: 40px;
                 border-bottom: 1px solid #333333;
             }
+            .util-link {
+                font-size: 0.7em;
+                margin-left: 10px;
+                color: #888888;
+                text-decoration: none;
+            }
         </style>
         <script>
             function selectLang(lang) {
@@ -174,9 +180,11 @@ fun generateFeeds(context: Context): String {
                         if (maxRetries > 0 || currentScroll > 0) {
                             performScrollAndNavigate(maxRetries-1);
                         } else {
-                            window.open(blobUrl);
-                            URL.revokeObjectURL(blobUrl);
-                            window.location.href = newUrl;
+                            setTimeout(function() {
+                                window.open(blobUrl);
+                                URL.revokeObjectURL(blobUrl);
+                                window.location.href = newUrl;
+                            }, 500);
                         }
                     }, 10);
                 }
