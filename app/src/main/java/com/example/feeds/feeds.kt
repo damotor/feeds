@@ -184,7 +184,7 @@ fun generateFeeds(context: Context): String {
                                 window.open(blobUrl);
                                 URL.revokeObjectURL(blobUrl);
                                 window.location.href = newUrl;
-                            }, 500);
+                            }, 750);
                         }
                     }, 10);
                 }
