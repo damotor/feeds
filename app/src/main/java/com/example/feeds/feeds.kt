@@ -74,11 +74,6 @@ fun <T> runSuspendingBlockAndWaitForResult(
 fun generateFeeds(context: Context): String {
     var logs = "Processing started..."
 
-    if (doesFeedsFileExist(context)) {
-        openFeedsFile(context)
-        logs = "Existing '$FEEDS_CSV_FILE_NAME' found and opened.\n$logs"
-    }
-
     val feedItems = loadFeedsFile(context)
 
     if (feedItems == null) {

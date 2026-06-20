@@ -3,7 +3,6 @@ package com.example.feeds
 
 import android.content.ContentValues
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -11,7 +10,6 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.opencsv.CSVReader
-import com.opencsv.exceptions.CsvValidationException
 import java.io.InputStreamReader
 import java.io.IOException
 
@@ -151,56 +149,5 @@ fun loadFeedsFile(context: Context): List<FeedItem>? {
     }
 
     return parsedFeedItems
-}
-
-/**
- * Opens the feeds.csv file in the public Documents directory using an external app.
- *
- * @param context The application context.
- */
-@RequiresApi(Build.VERSION_CODES.Q)
-fun openFeedsFile(context: Context) {
-    val resolver = context.contentResolver
-    val queryUri: Uri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-    val documentsPath = "${Environment.DIRECTORY_DOCUMENTS}/"
-    val selection = "${MediaStore.MediaColumns.DISPLAY_NAME} = ? AND ${MediaStore.MediaColumns.RELATIVE_PATH} = ?"
-    val selectionArgs = arrayOf(FEEDS_CSV_FILE_NAME, documentsPath)
-
-    resolver.query(queryUri, arrayOf(MediaStore.MediaColumns._ID), selection, selectionArgs, null)?.use { cursor ->
-        if (cursor.moveToFirst()) {
-            val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
-            val fileUri = Uri.withAppendedPath(queryUri, id.toString())
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(fileUri, "text/csv")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            try {
-                context.startActivity(Intent.createChooser(intent, "Open feeds.csv"))
-            } catch (e: Exception) {
-                Log.e(TAG_FEED_LOADER, "Failed to open feeds.csv: ${e.message}", e)
-            }
-        }
-    }
-}
-
-/**
- * Checks if "feeds.csv" already exists in the public Documents directory.
- *
- * @param context The application context.
- * @return True if the file exists, false otherwise.
- */
-@RequiresApi(Build.VERSION_CODES.Q)
-fun doesFeedsFileExist(context: Context): Boolean {
-    val resolver = context.contentResolver
-    val queryUri: Uri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-    val documentsPath = "${Environment.DIRECTORY_DOCUMENTS}/"
-    val selection = "${MediaStore.MediaColumns.DISPLAY_NAME} = ? AND ${MediaStore.MediaColumns.RELATIVE_PATH} = ?"
-    val selectionArgs = arrayOf(FEEDS_CSV_FILE_NAME, documentsPath)
-
-    resolver.query(queryUri, arrayOf(MediaStore.MediaColumns._ID), selection, selectionArgs, null)?.use { cursor ->
-        return cursor.moveToFirst()
-    }
-    return false
 }
 
