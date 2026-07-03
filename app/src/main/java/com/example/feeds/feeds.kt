@@ -173,37 +173,29 @@ fun generateFeeds(context: Context): String {
                 }
             });
 
-            function scrollTopAndOpen(newUrl, blobUrl) {
-                function performScrollAndNavigate(maxRetries) {
-                    window.scrollTo(0, 0);
-                    setTimeout(function() {
-                        const currentScroll = window.scrollY;
-                        if (maxRetries > 0 || currentScroll > 0) {
-                            performScrollAndNavigate(maxRetries-1);
-                        } else {
-                            setTimeout(function() {
-                                window.open(blobUrl);
-                                URL.revokeObjectURL(blobUrl);
-                                window.location.href = newUrl;
-                            }, 750);
-                        }
-                    }, 10);
-                }
-                performScrollAndNavigate(100);
-            }
-
             function openInNewBackgroundTab(newUrl) {
                 const scrollY = Math.floor(window.pageYOffset || window.scrollY || document.documentElement.scrollTop || 0);
                 const htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
                     document.head.innerHTML +
-                    '<script>document.addEventListener("DOMContentLoaded", function() { window.scrollTo(0, ' + scrollY + '); });<' + '/script>' +
+                    '<script>document.addEventListener("DOMContentLoaded", function() { ' +
+                    'window.scrollTo(0, ' + scrollY + '); ' +
+                    'if (window.location.protocol === "blob:") setTimeout(() => URL.revokeObjectURL(window.location.href), 1000); ' +
+                    '});<' + '/script>' +
                     '</head><body>' +
                     document.body.innerHTML +
                     '</body></html>';
                 const blob = new Blob([htmlContent], { type: 'text/html' });
                 const blobUrl = URL.createObjectURL(blob);
                 
-                scrollTopAndOpen(newUrl, blobUrl);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                window.location.href = newUrl;
             }
         </script>
     </head>
