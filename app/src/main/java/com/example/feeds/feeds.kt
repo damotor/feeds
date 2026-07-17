@@ -102,17 +102,17 @@ fun generateFeeds(context: Context): String {
     <head>
         <title>Feed Posts</title>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             a {
                 color: #ffffff;
             }
             a:visited {
-              color: #666666;
+                color: #666666;
             }
             button { 
-                height: 100px;
+                height: 50px;
                 width: 49%;
-                font-size: 40px;
                 background-color: #000000;
                 color: #ffffff;
             }
@@ -125,17 +125,10 @@ fun generateFeeds(context: Context): String {
                 background-color: #000000;
                 margin: 0% 2% 0% 2%;
             }
-            h2 {
+            h3 {
                 color: #888888;
-                font-size: 30px;
-                margin-top: 40px;
+                margin-top: 20px;
                 border-bottom: 1px solid #333333;
-            }
-            .util-link {
-                font-size: 0.7em;
-                margin-left: 10px;
-                color: #888888;
-                text-decoration: none;
             }
         </style>
         <script>
@@ -212,7 +205,7 @@ fun generateFeeds(context: Context): String {
                         if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
                             val dateString = dateFormatter.format(Instant.ofEpochSecond(epoch))
                             if (dateString != lastDateString) {
-                                postsHtml += "<h2>$dateString</h2>"
+                                postsHtml += "<h3>$dateString</h3>"
                                 lastDateString = dateString
                             }
                             val asciiOnlyTitle = asciiRegex.replace(item.title, "")
