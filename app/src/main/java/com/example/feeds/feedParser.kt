@@ -290,6 +290,69 @@ suspend fun fetchAndParseFeedsConcurrently(feeds: List<FeedItem>): Pair<List<Pos
     return Pair(allParsedPosts, operationLogs.toString())
 }
 
+/**
+ * Attempts to discover an RSS/Atom feed URL from a regular webpage URL.
+ */
+suspend fun discoverRssUrl(urlString: String): Result<String> {
+    return withContext(Dispatchers.IO) {
+        val fetchResult = fetchUrlContentAsString(urlString)
+        if (fetchResult.isFailure) return@withContext Result.failure(fetchResult.exceptionOrNull() ?: Exception("Unknown error"))
+        
+        val html = fetchResult.getOrNull() ?: return@withContext Result.failure(Exception("Empty content"))
+
+        // Check if it's already an RSS feed
+        if (identifyFeedTypeHeuristic(html) != FeedType.UNKNOWN) {
+            return@withContext Result.success(urlString)
+        }
+
+        // 1. Standard discovery via <link> tags
+        // Look for application/rss+xml or application/atom+xml
+        val patterns = listOf(
+            Regex("""<link[^>]+type=["']application/rss\+xml["'][^>]+href=["']([^"']+)["']""", RegexOption.IGNORE_CASE),
+            Regex("""<link[^>]+href=["']([^"']+)["'][^>]+type=["']application/rss\+xml["']""", RegexOption.IGNORE_CASE),
+            Regex("""<link[^>]+type=["']application/atom\+xml["'][^>]+href=["']([^"']+)["']""", RegexOption.IGNORE_CASE),
+            Regex("""<link[^>]+href=["']([^"']+)["'][^>]+type=["']application/atom\+xml["']""", RegexOption.IGNORE_CASE)
+        )
+
+        for (pattern in patterns) {
+            pattern.find(html)?.let { match ->
+                var href = match.groupValues[1]
+                if (href.startsWith("/")) {
+                    val originalUrl = URL(urlString)
+                    href = "${originalUrl.protocol}://${originalUrl.host}$href"
+                } else if (!href.startsWith("http")) {
+                    val originalUrl = URL(urlString)
+                    val baseUrl = urlString.substringBeforeLast("/")
+                    href = if (baseUrl.endsWith("/")) "$baseUrl$href" else "$baseUrl/$href"
+                }
+                return@withContext Result.success(href)
+            }
+        }
+
+        // 2. YouTube specific discovery (look for channelId)
+        if (urlString.contains("youtube.com/")) {
+            // Look for "channelId":"..."
+            val channelIdRegex = Regex(""""channelId":"([^"]+)"""")
+            channelIdRegex.find(html)?.let { match ->
+                return@withContext Result.success("https://www.youtube.com/feeds/videos.xml?channel_id=${match.groupValues[1]}")
+            }
+            // Look for channel link in meta tags
+            val ogUrlRegex = Regex("""<meta[^>]+property=["']og:url["'][^>]+content=["']https://www\.youtube\.com/channel/([^"']+)["']""", RegexOption.IGNORE_CASE)
+            ogUrlRegex.find(html)?.let { match ->
+                return@withContext Result.success("https://www.youtube.com/feeds/videos.xml?channel_id=${match.groupValues[1]}")
+            }
+        }
+
+        // 3. Medium specific discovery
+        if (urlString.contains("medium.com/")) {
+            // Medium usually has discovery links, but if we're here, we can try a fallback
+            // but discovery is safer.
+        }
+
+        Result.failure(Exception("Could not discover RSS feed for this URL"))
+    }
+}
+
 // Dummy Log for environments without Android Log
 object Log {
     //fun d(tag: String, msg: String) = println("D/$tag: $msg")

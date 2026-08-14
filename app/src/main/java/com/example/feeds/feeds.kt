@@ -112,7 +112,7 @@ fun generateFeeds(context: Context): String {
             }
             button { 
                 height: 50px;
-                width: 49%;
+                width: 31%;
                 background-color: #000000;
                 color: #ffffff;
             }
@@ -193,6 +193,7 @@ fun generateFeeds(context: Context): String {
         </script>
     </head>
     <body>
+        <button onclick="window.location.href='feeds://edit'">Edit</button>
         <button id="en" onclick="selectLang('en')">EN</button>
         <button id="es" onclick="selectLang('es')">ES+CA</button>"""
             if (sortedPostsItems.isNotEmpty()) {

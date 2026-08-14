@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.opencsv.CSVReader
 import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.io.IOException
 
 private const val TAG_MEDIA_STORE_INIT = "MediaStoreInit"
@@ -122,6 +123,41 @@ fun parseCsvFromUriWithLibrary(context: Context, fileUri: Uri): List<FeedItem>? 
         return null
     }
     return parsedFeedItems
+}
+
+/**
+ * Reads the raw text content of the "feeds.csv" file.
+ */
+@RequiresApi(Build.VERSION_CODES.Q)
+fun readFeedsFileText(context: Context): String? {
+    val fileUri = initializeFileIfNotFound(context) ?: return null
+    return try {
+        context.contentResolver.openInputStream(fileUri)?.use { inputStream ->
+            inputStream.bufferedReader().readText()
+        }
+    } catch (e: Exception) {
+        Log.e(TAG_FEED_LOADER, "Error reading feeds file text: ${e.message}", e)
+        null
+    }
+}
+
+/**
+ * Saves the given text to the "feeds.csv" file.
+ */
+@RequiresApi(Build.VERSION_CODES.Q)
+fun saveFeedsFileText(context: Context, text: String): Boolean {
+    val fileUri = initializeFileIfNotFound(context) ?: return false
+    return try {
+        context.contentResolver.openOutputStream(fileUri, "wt")?.use { outputStream ->
+            OutputStreamWriter(outputStream, Charsets.UTF_8).use { writer ->
+                writer.write(text)
+            }
+            true
+        } ?: false
+    } catch (e: Exception) {
+        Log.e(TAG_FEED_LOADER, "Error saving feeds file text: ${e.message}", e)
+        false
+    }
 }
 
 /**
