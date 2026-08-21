@@ -193,8 +193,8 @@ fun generateFeeds(context: Context): String {
         </script>
     </head>
     <body>
-        <button onclick="window.location.href='feeds://edit'">Edit</button>
         <button id="en" onclick="selectLang('en')">EN</button>
+        <button onclick="window.location.href='feeds://edit'">⚙</button>
         <button id="es" onclick="selectLang('es')">ES+CA</button>"""
             if (sortedPostsItems.isNotEmpty()) {
                 val asciiRegex = Regex("[^\\x00-\\xFF]")
