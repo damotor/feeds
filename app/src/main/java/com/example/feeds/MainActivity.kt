@@ -370,6 +370,7 @@ fun FeedsEditor(onExit: () -> Unit, onSave: () -> Unit, onChanges: (Boolean) -> 
                         if (currentName.isNotBlank() && currentUrl.isNotBlank()) {
                             saveToHistory()
                             feedItems.add(FeedItem(currentLanguage, currentName, currentUrl))
+                            feedItems.sortWith(feedItemComparator)
                             clearInputs()
                         }
                     },
@@ -383,6 +384,7 @@ fun FeedsEditor(onExit: () -> Unit, onSave: () -> Unit, onChanges: (Boolean) -> 
                         selectedIndex?.let { index ->
                             saveToHistory()
                             feedItems[index] = FeedItem(currentLanguage, currentName, currentUrl)
+                            feedItems.sortWith(feedItemComparator)
                             clearInputs()
                         }
                     },
@@ -492,7 +494,7 @@ private fun parseCsvText(text: String): List<FeedItem> {
     } catch (e: Exception) {
         Log.e("FeedsEditor", "Error parsing CSV: ${e.message}")
     }
-    return items
+    return items.sortedWith(feedItemComparator)
 }
 
 private fun serializeItems(items: List<FeedItem>): String {

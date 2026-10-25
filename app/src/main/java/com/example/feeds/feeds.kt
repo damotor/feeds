@@ -22,6 +22,8 @@ data class FeedItem(
     val url: String
 )
 
+val feedItemComparator = compareBy<FeedItem> { it.language.lowercase() }.thenBy { it.title.lowercase() }
+
 data class PostItem(
     val title: String,
     val link: String,

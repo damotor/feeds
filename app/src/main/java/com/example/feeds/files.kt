@@ -122,7 +122,7 @@ fun parseCsvFromUriWithLibrary(context: Context, fileUri: Uri): List<FeedItem>? 
         Log.e(TAG_FEED_LOADER, "Error reading or parsing '$fileUri': ${e.message}", e)
         return null
     }
-    return parsedFeedItems
+    return parsedFeedItems.sortedWith(feedItemComparator)
 }
 
 /**
