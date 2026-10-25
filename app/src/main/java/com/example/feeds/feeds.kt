@@ -4,18 +4,12 @@ package com.example.feeds
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.startCoroutine
 
-// Data class to represent a parsed feed item (optional, but good for structure)
-// Modify this based on what each line in your feeds.csv represents.
 data class FeedItem(
     val language: String,
     val title: String,
@@ -31,75 +25,30 @@ data class PostItem(
     val publishedEpochSeconds: Long?
 )
 
-/**
-* Runs a suspending block and helps retrieve its result synchronously in a blocking manner
-* using a CountDownLatch.
-*
-* THIS IS A BLOCKING CALL and should not be used on the main thread in UI applications
-* if the block takes significant time.
-*
-* @param block The suspending block to execute. It should return the value (e.g., logs string)
-*              that needs to be passed back.
-* @param timeoutMillis The maximum time to wait for the block to complete.
-* @return The result from the block, or null if it times out or an error occurs.
-*/
-fun <T> runSuspendingBlockAndWaitForResult(
-    block: suspend () -> T,
-    timeoutMillis: Long = 10000 // Default 10 seconds timeout
-): T? {
-    val latch = CountDownLatch(1)
-    val resultRef = AtomicReference<Result<T>?>(null) // To store the result or exception
-
-    block.startCoroutine(object : Continuation<T> {
-        override val context = EmptyCoroutineContext
-        override fun resumeWith(result: Result<T>) {
-            resultRef.set(result)
-            latch.countDown() // Signal completion
-        }
-    })
-
-    return try {
-        if (latch.await(timeoutMillis, TimeUnit.MILLISECONDS)) {
-            resultRef.get()?.getOrThrow() // If successful, return value, otherwise throw exception
-        } else {
-            println("Warning: Timed out waiting for suspending block to complete.")
-            null // Timeout
-        }
-    } catch (e: Exception) {
-        println("Error during suspending block execution: ${e.message}")
-        e.printStackTrace()
-        null
-    }
-}
-
 @RequiresApi(Build.VERSION_CODES.Q)
-fun generateFeeds(context: Context): String {
+suspend fun generateFeeds(context: Context): String = withContext(Dispatchers.IO) {
     var logs = "Processing started..."
 
     val feedItems = loadFeedsFile(context)
 
     if (feedItems == null) {
         logs = "Error: Failed to load or parse feeds.csv.\n$logs"
-        return logs
+        return@withContext logs
     }
 
     if (feedItems.isEmpty()) {
         logs = "No feed items found in feeds.csv or all lines were empty/malformed.\n$logs"
-        return logs
+        return@withContext logs
     }
 
     logs = "Loaded ${feedItems.size} feed urls. Starting processing...\n$logs"
 
-    // Now, run the async part and wait for its logs
-    val logsFromAsyncBlock: String? = runSuspendingBlockAndWaitForResult(
-        block = {
-            var asyncLogs = ""
-            // --- Start of the code previously in runSuspendingWithResultCallback's block ---
-            val (allPostsItems, fetchAndParseLogs) = fetchAndParseFeedsConcurrently(feedItems)
-            asyncLogs = fetchAndParseLogs + asyncLogs
-            val sortedPostsItems = allPostsItems.sortedByDescending { it.publishedEpochSeconds }
+    var asyncLogs = ""
+    val (allPostsItems, fetchAndParseLogs) = fetchAndParseFeedsConcurrently(feedItems)
+    asyncLogs = fetchAndParseLogs + asyncLogs
+    val sortedPostsItems = allPostsItems.sortedByDescending { it.publishedEpochSeconds }
 
-            var postsHtml = """<!DOCTYPE html>
+    var postsHtml = """<!DOCTYPE html>
 <html lang="en">
     <head>
         <title>Feed Posts</title>
@@ -198,48 +147,37 @@ fun generateFeeds(context: Context): String {
         <button id="en" onclick="selectLang('en')">EN</button>
         <button onclick="window.location.href='feeds://edit'">⚙</button>
         <button id="es" onclick="selectLang('es')">ES+CA</button>"""
-            if (sortedPostsItems.isNotEmpty()) {
-                val asciiRegex = Regex("[^\\x00-\\xFF]")
-                val dateFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy").withZone(ZoneId.systemDefault())
-                var lastDateString = ""
+    if (sortedPostsItems.isNotEmpty()) {
+        val asciiRegex = Regex("[^\\x00-\\xFF]")
+        val dateFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy").withZone(ZoneId.systemDefault())
+        var lastDateString = ""
 
-                sortedPostsItems.forEach { item ->
-                    item.publishedEpochSeconds?.let { epoch ->
-                        if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
-                            val dateString = dateFormatter.format(Instant.ofEpochSecond(epoch))
-                            if (dateString != lastDateString) {
-                                postsHtml += "<h3>$dateString</h3>"
-                                lastDateString = dateString
-                            }
-                            val asciiOnlyTitle = asciiRegex.replace(item.title, "")
-                            postsHtml += "<p class='${item.language}'><a  href='${item.link}' onclick='openInNewBackgroundTab(\"${item.link}\");return false;'>${asciiOnlyTitle.lowercase()}</a></p>"
-                            return@forEach
-                        }
+        sortedPostsItems.forEach { item ->
+            item.publishedEpochSeconds?.let { epoch ->
+                if (!item.link.startsWith("https://www.youtube.com/shorts/")) {
+                    val dateString = dateFormatter.format(Instant.ofEpochSecond(epoch))
+                    if (dateString != lastDateString) {
+                        postsHtml += "<h3>$dateString</h3>"
+                        lastDateString = dateString
                     }
+                    val asciiOnlyTitle = asciiRegex.replace(item.title, "")
+                    postsHtml += "<p class='${item.language}'><a  href='${item.link}' onclick='openInNewBackgroundTab(\"${item.link}\");return false;'>${asciiOnlyTitle.lowercase()}</a></p>"
+                    return@forEach
                 }
-                postsHtml += "</body></html>"
-
-                val serverInstance =
-                    startSimpleHttpServer(8080, postsHtml) // Your existing function
-                asyncLogs = if (serverInstance == null) {
-                    "Error: starting server failed\n$asyncLogs"
-                } else {
-                    "Server started on port ${serverInstance.listeningPort}. Access at http://localhost:8080/\n$asyncLogs"
-                }
-            } else {
-                asyncLogs = "No posts found.\n$asyncLogs"
             }
+        }
+        postsHtml += "</body></html>"
 
-            // --- End of the code previously in runSuspendingWithResultCallback's block ---
-            asyncLogs // This is the string returned by the block
-        },
-        timeoutMillis = 30000 // Wait up to 30 seconds for the async operations
-    )
-
-    if (logsFromAsyncBlock != null) {
-        return logsFromAsyncBlock + logs // Combine and return
+        val serverInstance =
+            startSimpleHttpServer(8080, postsHtml) // Your existing function
+        asyncLogs = if (serverInstance == null) {
+            "Error: starting server failed\n$asyncLogs"
+        } else {
+            "Server started on port ${serverInstance.listeningPort}. Access at http://localhost:8080/\n$asyncLogs"
+        }
     } else {
-        val errorMsg = "Error: Failed to get logs from asynchronous block (timed out or error).\n"
-        return errorMsg + logs
+        asyncLogs = "No posts found.\n$asyncLogs"
     }
+
+    return@withContext asyncLogs + logs
 }

@@ -76,16 +76,15 @@ class MainActivity : ComponentActivity() {
 
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
-        val initialLogs = generateFeeds(this)
         super.onCreate(savedInstanceState)
-        
+        volumeControlStream = android.media.AudioManager.STREAM_MUSIC
+
         handleIntent(intent)
-        
+
         enableEdgeToEdge()
         setContent {
             FeedsTheme {
                 FeedsApp(
-                    initialLogs = initialLogs,
                     initialMode = appModeState.value,
                     onModeChange = { mode -> 
                         isEditing = (mode == AppMode.EDITOR)
@@ -93,10 +92,6 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
-        }
-        // Only open browser if we retrieved posts
-        if (!initialLogs.contains("No posts found.")) {
-            openUrlWithAppChooser(this, "http://localhost:8080/")
         }
         scheduleAppExit()
     }
@@ -133,16 +128,26 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-fun FeedsApp(initialLogs: String, initialMode: AppMode, onModeChange: (AppMode) -> Unit) {
+fun FeedsApp(initialMode: AppMode, onModeChange: (AppMode) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
     var mode by remember(initialMode) { mutableStateOf(initialMode) }
-    var logs by remember { mutableStateOf(initialLogs) }
+    var logs by remember { mutableStateOf("Processing started...") }
     var showExitConfirmation by remember { mutableStateOf(false) }
     var pendingChanges by remember { mutableStateOf(false) }
-    var isRefreshing by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(true) }
 
     LaunchedEffect(mode) {
         onModeChange(mode)
+    }
+
+    LaunchedEffect(Unit) {
+        val newLogs = generateFeeds(context)
+        logs = newLogs
+        isRefreshing = false
+        if (!newLogs.contains("No posts found.")) {
+            openUrlWithAppChooser(context, "http://localhost:8080/")
+        }
     }
 
     Scaffold(
@@ -155,12 +160,11 @@ fun FeedsApp(initialLogs: String, initialMode: AppMode, onModeChange: (AppMode) 
                         IconButton(
                             onClick = {
                                 isRefreshing = true
-                                // We'll run this in a background thread
-                                Thread {
+                                scope.launch {
                                     val newLogs = generateFeeds(context)
                                     logs = newLogs
                                     isRefreshing = false
-                                }.start()
+                                }
                             },
                             enabled = !isRefreshing
                         ) {
@@ -204,13 +208,11 @@ fun FeedsApp(initialLogs: String, initialMode: AppMode, onModeChange: (AppMode) 
                         onSave = {
                             mode = AppMode.LOGS
                             isRefreshing = true
-                            Thread {
+                            scope.launch {
                                 val newLogs = generateFeeds(context)
-                                Handler(Looper.getMainLooper()).post {
-                                    logs = newLogs
-                                    isRefreshing = false
-                                }
-                            }.start()
+                                logs = newLogs
+                                isRefreshing = false
+                            }
                         },
                         onChanges = { pendingChanges = it }
                     )
