@@ -157,8 +157,8 @@ fun generateFeeds(context: Context): String {
             document.addEventListener('DOMContentLoaded', function() {
                 if (window.location.protocol === 'blob:') return;
                 const d = new Date();
-                // Friday and Saturday: display Spanish and Catalan
-                if (d.getDay() == 5 || d.getDay() == 6) {
+                // Friday: display Spanish and Catalan
+                if (d.getDay() == 5) {
                     selectLang('es');
                 } else {
                     // otherwise show only English
