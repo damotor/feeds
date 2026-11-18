@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -191,7 +193,11 @@ fun FeedsApp(initialMode: AppMode, onModeChange: (AppMode) -> Unit) {
             )
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
+        Box(
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+        ) {
             when (mode) {
                 AppMode.LOGS -> {
                     FeedLogs(logs)
@@ -312,97 +318,105 @@ fun FeedsEditor(onExit: () -> Unit, onSave: () -> Unit, onChanges: (Boolean) -> 
 
     BackHandler(onBack = onExit)
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        // --- Top Input Section ---
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box {
-                    Button(onClick = { showLangMenu = true }) {
-                        Text(currentLanguage)
-                    }
-                    DropdownMenu(expanded = showLangMenu, onDismissRequest = { showLangMenu = false }) {
-                        languages.forEach { lang ->
-                            DropdownMenuItem(
-                                text = { Text(lang) },
-                                onClick = {
-                                    currentLanguage = lang
-                                    showLangMenu = false
-                                }
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = currentName,
-                    onValueChange = { currentName = it },
-                    label = { Text("Name") },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            OutlinedTextField(
-                value = currentUrl,
-                onValueChange = { currentUrl = it },
-                label = { Text("RSS URL") },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                trailingIcon = {
-                    if (isDetecting) {
-                        CircularProgressIndicator(modifier = Modifier.padding(8.dp))
-                    } else {
-                        IconButton(onClick = {
-                            if (currentUrl.isNotBlank()) {
-                                isDetecting = true
-                                scope.launch {
-                                    val discoveryResult = discoverRssUrl(currentUrl)
-                                    if (discoveryResult.isSuccess) {
-                                        currentUrl = discoveryResult.getOrNull() ?: currentUrl
-                                    }
-                                    isDetecting = false
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .imePadding()
+    ) {
+        // --- Scrollable Area (Top Input + Feeds List) ---
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            item {
+                // --- Top Input Section ---
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box {
+                            Button(onClick = { showLangMenu = true }) {
+                                Text(currentLanguage)
+                            }
+                            DropdownMenu(expanded = showLangMenu, onDismissRequest = { showLangMenu = false }) {
+                                languages.forEach { lang ->
+                                    DropdownMenuItem(
+                                        text = { Text(lang) },
+                                        onClick = {
+                                            currentLanguage = lang
+                                            showLangMenu = false
+                                        }
+                                    )
                                 }
                             }
-                        }) {
-                            Icon(Icons.Default.Search, contentDescription = "Detect RSS")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        OutlinedTextField(
+                            value = currentName,
+                            onValueChange = { currentName = it },
+                            label = { Text("Name") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = currentUrl,
+                        onValueChange = { currentUrl = it },
+                        label = { Text("RSS URL") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        trailingIcon = {
+                            if (isDetecting) {
+                                CircularProgressIndicator(modifier = Modifier.padding(8.dp))
+                            } else {
+                                IconButton(onClick = {
+                                    if (currentUrl.isNotBlank()) {
+                                        isDetecting = true
+                                        scope.launch {
+                                            val discoveryResult = discoverRssUrl(currentUrl)
+                                            if (discoveryResult.isSuccess) {
+                                                currentUrl = discoveryResult.getOrNull() ?: currentUrl
+                                            }
+                                            isDetecting = false
+                                        }
+                                    }
+                                }) {
+                                    Icon(Icons.Default.Search, contentDescription = "Detect RSS")
+                                }
+                            }
+                        }
+                    )
+                    Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                        Button(
+                            onClick = {
+                                if (currentName.isNotBlank() && currentUrl.isNotBlank()) {
+                                    saveToHistory()
+                                    feedItems.add(FeedItem(currentLanguage, currentName, currentUrl))
+                                    feedItems.sortWith(feedItemComparator)
+                                    clearInputs()
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Add")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                selectedIndex?.let { index ->
+                                    saveToHistory()
+                                    feedItems[index] = FeedItem(currentLanguage, currentName, currentUrl)
+                                    feedItems.sortWith(feedItemComparator)
+                                    clearInputs()
+                                }
+                            },
+                            enabled = selectedIndex != null,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Update")
                         }
                     }
                 }
-            )
-            Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                Button(
-                    onClick = {
-                        if (currentName.isNotBlank() && currentUrl.isNotBlank()) {
-                            saveToHistory()
-                            feedItems.add(FeedItem(currentLanguage, currentName, currentUrl))
-                            feedItems.sortWith(feedItemComparator)
-                            clearInputs()
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Add")
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(
-                    onClick = {
-                        selectedIndex?.let { index ->
-                            saveToHistory()
-                            feedItems[index] = FeedItem(currentLanguage, currentName, currentUrl)
-                            feedItems.sortWith(feedItemComparator)
-                            clearInputs()
-                        }
-                    },
-                    enabled = selectedIndex != null,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Update")
-                }
-            }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Existing Feeds:", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-        
-        // --- List Section ---
-        LazyColumn(modifier = Modifier.weight(1f)) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Existing Feeds:", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             itemsIndexed(feedItems) { index, item ->
                 Row(
                     modifier = Modifier
